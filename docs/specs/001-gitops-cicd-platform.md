@@ -383,7 +383,7 @@ Harness Open Source 作为产品交互、信息架构和领域命名的外部参
 
 | 决策 | 状态 |
 |---|---|
-| 第一阶段 Registry | 已决定使用 Distribution 3.1.1，不安装 Harbor |
+| 第一阶段 Registry | 已决定使用 Zot 2.1.18；本地部署，保持 OCI 标准边界，不安装 Harbor |
 | Maven 缓存与镜像构建器 | 已决定第一阶段关闭缓存并验证 BuildKit rootless |
 | ARM64 开发构建 | 已决定第一阶段只构建 `linux/arm64`；未来 AMD64/多架构发布策略仍待评审 |
 | 私有 GitLab CI 克隆认证 | 已决定使用项目级只读 Deploy Token；实例地址、仓库命名和平台级集成仍待评审 |

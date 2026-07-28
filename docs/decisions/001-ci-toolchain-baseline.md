@@ -24,12 +24,12 @@
 | Spring Boot | 当前稳定文档版本为 `4.1.0` | `4.1.0` | 新建控制面不背负 Spring Framework 6 到 7 的迁移债务 |
 | Maven | 官方推荐稳定版为 `3.9.16`；3.10 和 4.0 仍为预览版本 | Maven Wrapper 固定 `3.9.16` | 构建版本随仓库确定，不依赖节点预装 Maven |
 | BuildKit | 最新稳定版为 `v0.31.2`，官方提供 Kubernetes Job 与 rootless 模式 | `moby/buildkit:v0.31.2-rootless` | 支持 Dockerfile、ARM64 和无 Docker Socket 构建 |
-| OCI Registry | Distribution 最新稳定版为 `v3.1.1` | `registry:3.1.1` | 比 Harbor 轻量，足以验证 push、pull 和 digest 契约 |
+| OCI Registry | Zot 官方提供 Linux ARM64 多架构镜像，并支持 TLS、htpasswd、仓库级 ACL 与本地文件系统 | Zot `v2.1.18` | 保持轻量的同时区分 CI 推送与 K8s 只读拉取身份，并为单人环境保留 UI |
 
 已通过 OCI manifest 只读检查确认以下镜像包含 `linux/arm64`：
 
 - `moby/buildkit:v0.31.2-rootless`
-- `registry:3.1.1`
+- `ghcr.io/project-zot/zot:v2.1.18` 的 Linux ARM64 manifest
 - `eclipse-temurin:25-jdk`
 
 ## 3. 已接受决策
@@ -50,11 +50,19 @@
 
 ### CI-DEC-003：镜像仓库
 
-- 第一阶段使用 CNCF Distribution `registry:3.1.1`，不安装 Harbor。
-- Registry 使用持久卷保存数据，仅开放给本地受控网络。
-- 即使处于本地环境，也必须启用认证；凭据通过 Kubernetes Secret 提供。
+- 第一阶段使用 Zot `v2.1.18`，不安装 Harbor；平台仍只依赖 OCI
+  Distribution API，不依赖 Zot 私有 API。
+- Registry 使用 8 GiB `local-path` 持久卷保存数据，通过固定 NodePort
+  仅开放给本地受控网络。
+- 使用本地 CA TLS 和 bcrypt htpasswd 认证；凭据与私钥运行时生成并通过
+  Kubernetes Secret 提供，不进入 Git。
+- `ci-pusher` 仅允许对 `bipeline/**` 执行 read/create/update；
+  `k8s-puller` 仅允许 read；匿名和未匹配用户默认拒绝。
+- 首个闭环关闭 CVE 数据库更新，避免受限网络和额外资源消耗；保留 UI
+  与搜索能力，漏洞扫描在 Registry 基础闭环稳定后单独评审。
 - CI 成功以 Registry 返回并可重新拉取的 digest 为准。
-- Harbor 的扫描、复制、项目治理和 UI 等能力在出现真实需求后重新评估。
+- Harbor 的复制和项目治理等能力在出现真实需求后重新评估；替换时不得
+  改变 OCI 制品和 digest 契约。
 
 ### CI-DEC-004：镜像构建器
 
@@ -106,6 +114,7 @@
 | K3s `latest` 或 RC | 无法复现，升级会静默改变 Kubernetes 和内置组件版本 |
 | Tekton `latest` 或 v1.14 功能线 | 当前已有 v1.12 LTS，基础阶段没有必须使用 1.14 的能力 |
 | Harbor | 资源和运维成本高于首个 CI 闭环的实际需求 |
+| CNCF Distribution 3.1.1 | 足够轻量，但需要额外系统才能提供仓库级推拉身份隔离和 UI；Zot 在 ARM64 上以更少集成工作满足当前边界 |
 | 宿主机 Docker Socket | 赋予构建容器过大的宿主机控制能力，违反 `CI-SEC-006` |
 | 缺少 Wrapper 时使用系统 Maven | 构建结果依赖节点状态，破坏可重复性 |
 | 第一阶段启用共享 Maven 缓存 | 会增加并发、权限和缓存污染变量，不利于定位基础链路问题 |
@@ -142,4 +151,6 @@
 - [BuildKit Releases](https://github.com/moby/buildkit/releases)
 - [BuildKit Rootless Mode](https://github.com/moby/buildkit/blob/master/docs/rootless.md)
 - [BuildKit Kubernetes Examples](https://github.com/moby/buildkit/tree/master/examples/kubernetes)
-- [Distribution Releases](https://github.com/distribution/distribution/releases)
+- [Zot Releases](https://github.com/project-zot/zot/releases)
+- [Zot Configuration](https://zotregistry.dev/v2.1.18/admin-guide/admin-configuration/)
+- [Zot Authentication and Authorization](https://zotregistry.dev/v2.1.18/articles/authn-authz/)

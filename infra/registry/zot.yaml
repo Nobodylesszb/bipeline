@@ -1,0 +1,151 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: zot
+  namespace: bipeline-registry
+  labels:
+    app.kubernetes.io/part-of: bipeline
+    app.kubernetes.io/component: registry
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: zot-data
+  namespace: bipeline-registry
+  labels:
+    app.kubernetes.io/part-of: bipeline
+    app.kubernetes.io/component: registry
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 8Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zot
+  namespace: bipeline-registry
+  labels:
+    app.kubernetes.io/part-of: bipeline
+    app.kubernetes.io/component: registry
+spec:
+  type: NodePort
+  selector:
+    app.kubernetes.io/name: zot
+    app.kubernetes.io/instance: bipeline
+  ports:
+    - name: https
+      protocol: TCP
+      port: 5000
+      targetPort: https
+      nodePort: 30443
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: zot
+  namespace: bipeline-registry
+  labels:
+    app.kubernetes.io/part-of: bipeline
+    app.kubernetes.io/component: registry
+spec:
+  serviceName: zot
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: zot
+      app.kubernetes.io/instance: bipeline
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: zot
+        app.kubernetes.io/instance: bipeline
+        app.kubernetes.io/part-of: bipeline
+        app.kubernetes.io/component: registry
+    spec:
+      serviceAccountName: zot
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: zot
+          image: ghcr.io/project-zot/zot:v2.1.18@sha256:96913b282b93ee7bc415555c14887e81ece9078631f3189c2e8c1fbb5f888af6
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: https
+              containerPort: 5000
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          startupProbe:
+            httpGet:
+              path: /startupz
+              port: https
+              scheme: HTTPS
+            periodSeconds: 5
+            failureThreshold: 24
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: https
+              scheme: HTTPS
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /livez
+              port: https
+              scheme: HTTPS
+            periodSeconds: 20
+            failureThreshold: 3
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/registry
+            - name: config
+              mountPath: /etc/zot/config.json
+              subPath: config.json
+              readOnly: true
+            - name: auth
+              mountPath: /run/zot-auth
+              readOnly: true
+            - name: tls
+              mountPath: /run/zot-tls
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: zot-data
+        - name: config
+          configMap:
+            name: zot-config
+        - name: auth
+          secret:
+            secretName: zot-auth
+        - name: tls
+          secret:
+            secretName: zot-tls
+        - name: tmp
+          emptyDir: {}

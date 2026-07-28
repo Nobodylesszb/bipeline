@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: zot-config
+  namespace: bipeline-registry
+  labels:
+    app.kubernetes.io/part-of: bipeline
+    app.kubernetes.io/component: registry
+data:
+  config.json: |
+    {
+      "distSpecVersion": "1.1.0",
+      "storage": {
+        "rootDirectory": "/var/lib/registry",
+        "commit": true,
+        "dedupe": true,
+        "gc": true,
+        "gcDelay": "2h",
+        "gcInterval": "24h"
+      },
+      "http": {
+        "address": "0.0.0.0",
+        "port": "5000",
+        "realm": "bipeline-zot",
+        "compat": ["docker2s2"],
+        "readTimeout": "60s",
+        "writeTimeout": "900s",
+        "tls": {
+          "cert": "/run/zot-tls/tls.crt",
+          "key": "/run/zot-tls/tls.key"
+        },
+        "auth": {
+          "failDelay": 2,
+          "htpasswd": {
+            "path": "/run/zot-auth/htpasswd"
+          }
+        },
+        "accessControl": {
+          "repositories": {
+            "bipeline/**": {
+              "policies": [
+                {
+                  "users": ["ci-pusher"],
+                  "actions": ["read", "create", "update"]
+                },
+                {
+                  "users": ["k8s-puller"],
+                  "actions": ["read"]
+                }
+              ],
+              "defaultPolicy": []
+            },
+            "**": {
+              "defaultPolicy": []
+            }
+          },
+          "adminPolicy": {
+            "users": ["zot-admin"],
+            "actions": ["read", "create", "update", "delete"]
+          }
+        }
+      },
+      "log": {
+        "level": "info"
+      },
+      "extensions": {
+        "search": {
+          "enable": true
+        },
+        "ui": {
+          "enable": true
+        }
+      }
+    }
