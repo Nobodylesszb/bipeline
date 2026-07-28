@@ -1,0 +1,67 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: foundation-smoke
+  namespace: bipeline-ci
+  labels:
+    app.kubernetes.io/part-of: bipeline
+    app.kubernetes.io/component: foundation-smoke
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 64Mi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: foundation-smoke
+  namespace: bipeline-ci
+  labels:
+    app.kubernetes.io/part-of: bipeline
+    app.kubernetes.io/component: foundation-smoke
+spec:
+  serviceAccountName: ci-runner
+  automountServiceAccountToken: false
+  restartPolicy: Never
+  activeDeadlineSeconds: 120
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 65532
+    runAsGroup: 65532
+    fsGroup: 65532
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+    - name: smoke
+      image: rancher/mirrored-library-busybox:1.37.0
+      imagePullPolicy: IfNotPresent
+      command:
+        - /bin/sh
+        - -ec
+        - |
+          nslookup kubernetes.default.svc.cluster.local
+          printf 'bipeline-foundation-smoke\n' > /workspace/probe
+          test "$(cat /workspace/probe)" = 'bipeline-foundation-smoke'
+      resources:
+        requests:
+          cpu: 10m
+          memory: 16Mi
+        limits:
+          cpu: 100m
+          memory: 64Mi
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop:
+            - ALL
+      volumeMounts:
+        - name: workspace
+          mountPath: /workspace
+  volumes:
+    - name: workspace
+      persistentVolumeClaim:
+        claimName: foundation-smoke
