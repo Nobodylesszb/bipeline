@@ -1,8 +1,14 @@
 package com.pipeline.platform.source.infrastructure.gitlab;
 
+import java.util.List;
+
+import com.pipeline.platform.shared.error.BusinessException;
+import com.pipeline.platform.shared.error.ErrorCode;
+import com.pipeline.platform.source.application.model.GitBranchInfo;
 import com.pipeline.platform.source.application.model.GitProviderCapabilities;
 import com.pipeline.platform.source.application.port.GitProviderClient;
 import com.pipeline.platform.source.application.model.GitProviderVerification;
+import com.pipeline.platform.source.application.model.GitRepositoryInfo;
 import com.pipeline.platform.source.domain.AuthType;
 import com.pipeline.platform.source.domain.CodeSource;
 import com.pipeline.platform.source.domain.CodeSourceProvider;
@@ -39,6 +45,22 @@ public class GitLabGitProviderClient implements GitProviderClient {
         } catch (GitLabApiException exception) {
             return GitProviderVerification.failed(messageFor(exception));
         }
+    }
+
+    @Override
+    public GitRepositoryInfo getRepository(CodeSource codeSource, String repositoryPath) {
+        throw new BusinessException(
+                ErrorCode.REPOSITORY_NOT_ACCESSIBLE,
+                "GitLab repository lookup is not implemented yet"
+        );
+    }
+
+    @Override
+    public List<GitBranchInfo> listBranches(CodeSource codeSource, String repositoryPath) {
+        throw new BusinessException(
+                ErrorCode.REPOSITORY_NOT_ACCESSIBLE,
+                "GitLab branch lookup is not implemented yet"
+        );
     }
 
     private boolean canUseGitLabApi(CodeSource codeSource) {

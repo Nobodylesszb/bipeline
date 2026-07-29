@@ -20,7 +20,7 @@ public class GlobalExceptionHandler {
             HttpServletRequest request
     ) {
         ErrorResponse response = new ErrorResponse(
-                exception.errorCode().name(),
+                exception.errorCode().httpStatus().value(),
                 exception.getMessage(),
                 exception.details(),
                 traceId(request)
@@ -34,7 +34,7 @@ public class GlobalExceptionHandler {
             HttpServletRequest request
     ) {
         ErrorResponse response = new ErrorResponse(
-                ErrorCode.VALIDATION_FAILED.name(),
+                ErrorCode.VALIDATION_FAILED.httpStatus().value(),
                 "Request validation failed",
                 Map.of("fieldErrors", exception.getBindingResult().getFieldErrors().size()),
                 traceId(request)
@@ -48,7 +48,7 @@ public class GlobalExceptionHandler {
             HttpServletRequest request
     ) {
         ErrorResponse response = new ErrorResponse(
-                ErrorCode.INTERNAL_ERROR.name(),
+                ErrorCode.INTERNAL_ERROR.httpStatus().value(),
                 "Internal server error",
                 Map.of(),
                 traceId(request)

@@ -15,8 +15,10 @@ import com.pipeline.platform.shared.error.ErrorCode;
 import com.pipeline.platform.shared.time.ClockProvider;
 import com.pipeline.platform.source.application.command.VerifyCodeSourceCommand;
 import com.pipeline.platform.source.application.model.CodeSourceVerificationView;
+import com.pipeline.platform.source.application.model.GitBranchInfo;
 import com.pipeline.platform.source.application.model.GitProviderCapabilities;
 import com.pipeline.platform.source.application.model.GitProviderVerification;
+import com.pipeline.platform.source.application.model.GitRepositoryInfo;
 import com.pipeline.platform.source.application.port.GitProviderClient;
 import com.pipeline.platform.source.domain.AuthType;
 import com.pipeline.platform.source.domain.CodeSource;
@@ -106,6 +108,16 @@ class VerifyCodeSourceServiceTest {
                 );
             }
             return GitProviderVerification.failed("GitLab verification failed");
+        }
+
+        @Override
+        public GitRepositoryInfo getRepository(CodeSource codeSource, String repositoryPath) {
+            throw new UnsupportedOperationException("Repository lookup is not used by this test");
+        }
+
+        @Override
+        public List<GitBranchInfo> listBranches(CodeSource codeSource, String repositoryPath) {
+            throw new UnsupportedOperationException("Branch lookup is not used by this test");
         }
     }
 
