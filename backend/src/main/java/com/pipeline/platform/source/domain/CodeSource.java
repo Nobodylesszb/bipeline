@@ -1,10 +1,9 @@
 package com.pipeline.platform.source.domain;
 
 import java.time.OffsetDateTime;
-import java.util.UUID;
 
 public record CodeSource(
-        UUID id,
+        Long id,
         String name,
         CodeSourceProvider provider,
         String baseUrl,
@@ -19,7 +18,7 @@ public record CodeSource(
 ) {
 
     public static CodeSource create(
-            UUID id,
+            Long id,
             String name,
             CodeSourceProvider provider,
             String baseUrl,
@@ -41,6 +40,27 @@ public record CodeSource(
                 null,
                 now,
                 now
+        );
+    }
+
+    public CodeSource withVerification(
+            VerificationStatus status,
+            OffsetDateTime verifiedAt,
+            String message
+    ) {
+        return new CodeSource(
+                id,
+                name,
+                provider,
+                baseUrl,
+                authType,
+                username,
+                secretPlain,
+                status,
+                verifiedAt,
+                message,
+                createdAt,
+                verifiedAt
         );
     }
 

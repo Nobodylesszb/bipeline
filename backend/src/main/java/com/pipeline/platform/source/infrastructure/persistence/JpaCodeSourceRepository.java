@@ -2,20 +2,17 @@ package com.pipeline.platform.source.infrastructure.persistence;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import com.pipeline.platform.source.domain.CodeSource;
 import com.pipeline.platform.source.domain.CodeSourceRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public class JpaCodeSourceRepository implements CodeSourceRepository {
 
-    private final SpringDataCodeSourceRepository springDataRepository;
-
-    public JpaCodeSourceRepository(SpringDataCodeSourceRepository springDataRepository) {
-        this.springDataRepository = springDataRepository;
-    }
+    @Autowired
+    private SpringDataCodeSourceRepository springDataRepository;
 
     @Override
     public boolean existsByName(String name) {
@@ -28,7 +25,7 @@ public class JpaCodeSourceRepository implements CodeSourceRepository {
     }
 
     @Override
-    public Optional<CodeSource> findById(UUID id) {
+    public Optional<CodeSource> findById(Long id) {
         return springDataRepository.findById(id).map(CodeSourceJpaEntity::toDomain);
     }
 

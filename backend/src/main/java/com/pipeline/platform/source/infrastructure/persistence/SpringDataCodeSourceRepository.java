@@ -1,11 +1,10 @@
 package com.pipeline.platform.source.infrastructure.persistence;
 
 import java.util.List;
-import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-interface SpringDataCodeSourceRepository extends JpaRepository<CodeSourceJpaEntity, UUID> {
+interface SpringDataCodeSourceRepository extends JpaRepository<CodeSourceJpaEntity, Long> {
 
     boolean existsByName(String name);
 

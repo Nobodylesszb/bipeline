@@ -38,6 +38,21 @@
             <artifactId>flyway-database-postgresql</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.gitlab4j</groupId>
+            <artifactId>gitlab4j-api</artifactId>
+            <version>6.3.0</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.le-shi</groupId>
+            <artifactId>java-gitea-api</artifactId>
+            <version>1.26.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>3.0.3</version>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>

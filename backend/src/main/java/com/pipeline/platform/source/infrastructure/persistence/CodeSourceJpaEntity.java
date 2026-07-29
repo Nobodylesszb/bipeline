@@ -1,7 +1,6 @@
 package com.pipeline.platform.source.infrastructure.persistence;
 
 import java.time.OffsetDateTime;
-import java.util.UUID;
 
 import com.pipeline.platform.source.domain.AuthType;
 import com.pipeline.platform.source.domain.CodeSource;
@@ -11,6 +10,8 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
@@ -19,7 +20,8 @@ import jakarta.persistence.Table;
 class CodeSourceJpaEntity {
 
     @Id
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(nullable = false, length = 120)
     private String name;

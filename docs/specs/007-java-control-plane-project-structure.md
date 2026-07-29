@@ -50,7 +50,7 @@ pipeline/
 说明：
 
 - `backend` 是 Java / Spring Boot 控制面。
-- `templates/tekton` 存放平台级 Tekton Task/Pipeline 模板。
+- `templates/jenkins` 存放平台级 Jenkins Pipeline Script 模板。
 - 业务仓库不存放平台 CI 配置。
 - 如果第一版为了简单不建 Maven multi-module，也仍保留 `backend/` 目录，避免后续前端或模板混在根目录。
 
@@ -155,7 +155,7 @@ domain 不依赖 api/application/infrastructure
 ```text
 Controller 直接访问 JPA Repository
 Controller 写业务规则
-domain 引用 Spring MVC、JPA、Tekton、GitLab DTO
+domain 引用 Spring MVC、JPA、Jenkins、Tekton、GitLab DTO
 infrastructure 类型泄露到 API 响应
 跨模块直接访问对方 infrastructure
 ```
@@ -251,7 +251,7 @@ PluginContractValidator
 
 ### 5.5 execution
 
-负责运行记录和 Tekton 执行。
+负责运行记录和 Jenkins 执行。
 
 核心类：
 
@@ -259,7 +259,7 @@ PluginContractValidator
 PipelineRun
 StepRun
 ExecutionEngine
-TektonExecutionEngine
+JenkinsExecutionEngine
 RunStarter
 RunStatusSynchronizer
 RunCanceller
@@ -269,8 +269,8 @@ RunLogReader
 
 规则：
 
-- V1 只实现 `TektonExecutionEngine`。
-- `PipelineRun.status` 是平台投影，Tekton/Kubernetes 是执行事实源。
+- V1 只实现 `JenkinsExecutionEngine`。
+- `PipelineRun.status` 是平台投影，Jenkins 是执行事实源。
 - 重跑必须创建新 `PipelineRun`，不能覆盖原记录。
 
 ### 5.6 result
@@ -467,7 +467,7 @@ source/infrastructure/persistence/JpaCodeSourceRepository
 ```text
 source/infrastructure/gitlab/GitLabGitProviderClient
 source/infrastructure/github/GitHubGitProviderClient
-execution/infrastructure/tekton/TektonExecutionEngine
+execution/infrastructure/jenkins/JenkinsExecutionEngine
 registry/infrastructure/zot/ZotRegistryClient
 deploy/infrastructure/argocd/ArgoCdDeploymentStatusReader
 ```
@@ -537,7 +537,7 @@ BuildResult 归一化
 把所有 DTO 放进全局 dto 包
 把 Controller 写成业务编排中心
 把 JPA Entity 当领域对象直接到处传
-把 Tekton/Kubernetes 类型放进 domain
+把 Jenkins/Tekton/Kubernetes 类型放进 domain
 把 GitLab/GitHub 响应对象直接返回给前端
 用 Map<String, Object> 代替明确 DTO，除 configJson/schemaJson 等有意保留的扩展字段
 新增没有业务意义的 BaseService/BaseEntity
@@ -572,11 +572,11 @@ deploy
 
 ```text
 包结构与本文一致
-领域层无 Spring MVC/JPA/Tekton/GitLab 依赖
+领域层无 Spring MVC/JPA/Jenkins/Tekton/GitLab 依赖
 Controller 不直接访问数据库
 密钥脱敏集中实现
 StepType 和 PluginContract 有明确注册位置
-Tekton 代码只存在 execution.infrastructure.tekton
+Jenkins 代码只存在 execution.infrastructure.jenkins
 Zot 代码只存在 registry.infrastructure.zot
 至少有 source/project/pipeline/execution/result 的单元测试骨架
 ```

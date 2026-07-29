@@ -24,7 +24,7 @@
 
 ## 2. 模块边界
 
-Java 后端采用模块化单体。领域层不得依赖 Tekton、Kubernetes、Argo CD、GitLab SDK 或某个 Registry SDK 的 DTO。
+Java 后端采用模块化单体。领域层不得依赖 Jenkins、Tekton、Kubernetes、Argo CD、GitLab SDK 或某个 Registry SDK 的 DTO。
 
 ```text
 source
@@ -37,7 +37,7 @@ pipeline
   PipelineConfiguration、PipelineStep、BuildProfile、StepType、模板选择、插件契约
 
 execution
-  PipelineRun、StepRun、ExecutionEngine、TektonExecutionEngine、日志定位、取消、重跑
+  PipelineRun、StepRun、ExecutionEngine、JenkinsExecutionEngine、日志定位、取消、重跑
 
 result
   BuildResult、Artifact、Report、ReleaseCandidate
@@ -315,12 +315,12 @@ updatedAt
 ```text
 triggerType: MANUAL, WEBHOOK, SCHEDULE, RETRY
 status: QUEUED, RUNNING, SUCCEEDED, FAILED, CANCELLED, TIMED_OUT
-executionEngine: TEKTON
+executionEngine: JENKINS
 ```
 
 约束：
 
-- `externalRunId` 第一版保存 Tekton `PipelineRun` 名称。
+- `externalRunId` 第一版保存 Jenkins Job 名称和 Build Number，例如 `project-main-ci#12`。
 - `pipelineSnapshotJson` 保存当次运行的流水线配置和步骤快照。
 - 数据库不是运行状态事实源；状态字段是查询投影，必须能从执行引擎重新同步。
 - `AGENT` 是未来候选执行模式，第一版不进入枚举和实现计划。
@@ -484,7 +484,7 @@ CodeSource          读取仓库、分支、Tag、Revision
 OCI Registry        推送/查询镜像、校验 digest
 Helm Repository     推送/查询 Chart 包
 SonarQube           提交扫描、读取 Quality Gate
-Kubernetes Cluster  查询 Tekton/K8s 运行状态
+Jenkins             查询 Job、Build、Stage 和日志状态
 Argo CD             查询 Application sync/health
 GitOps Repository   提交期望状态变更
 ```
@@ -548,7 +548,7 @@ gitops-update
 缺少连接或密钥时失败原因清晰
 失败语义符合 failurePolicy
 日志不得泄露 Token、密码、SSH Key
-Tekton 模板映射必须包含必需参数和结果
+Jenkins Pipeline Script 模板映射必须包含必需参数和结果
 插件输出能被 BuildResult 正确归一化
 ```
 
@@ -977,7 +977,7 @@ POST /code-sources
 
 ## 8. 防大改规则
 
-- 领域对象不持有 Tekton CRD 类型。
+- 领域对象不持有 Jenkins、Tekton 或 Kubernetes DTO 类型。
 - API DTO 不直接暴露数据库实体。
 - `PipelineRun.status` 是投影，不是执行状态事实源。
 - `PipelineConfiguration.configJson` 必须受 `BuildProfile.schemaJson` 约束。
@@ -985,7 +985,7 @@ POST /code-sources
 - 新增 StepType 或外部连接前，必须先补 `PluginContract` 和插件契约测试。
 - `BuildResult.artifactsJson` 必须允许多制品、多平台、SBOM 和签名。
 - 删除 Project 第一版使用软删除或归档，不级联删除外部运行事实。
-- 第一版只实现 `TektonExecutionEngine`；领域层不依赖 Tekton CRD，但运行适配层明确以 Tekton 为默认执行底座。
+- 第一版只实现 `JenkinsExecutionEngine`；领域层不依赖 Jenkins DTO，但运行适配层明确以 Jenkins 为默认执行底座。
 
 ## 9. 待确认
 

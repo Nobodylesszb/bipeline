@@ -8,7 +8,7 @@
 
 ## 1. 背景
 
-平台已确定采用 Java / Spring Boot 自研控制面，并希望先做出一个可运行、可扩展的 CI/CD MVP。前期讨论中发现，仅描述 Tekton、Zot、GitOps 和 Argo CD 组件不足以指导产品实现；平台还需要清晰的创建流程、模板选择、流水线画布、Step 配置和运行详情体验。
+平台已确定采用 Java / Spring Boot 自研控制面，并希望先做出一个可运行、可扩展的 CI/CD MVP。前期讨论中发现，仅描述底层 CI/CD 组件不足以指导产品实现；平台还需要清晰的创建流程、模板选择、流水线画布、Step 配置和运行详情体验。
 
 FlowCI 是 Java 生态的开源 CI/CD Server，具有模板、Job / Step / Plugin、运行日志、Agent 和可视化流水线等产品概念。它的交互模式适合作为本平台第一版产品设计参考。
 
@@ -78,11 +78,11 @@ FlowCI Run     → PipelineRun
 平台核心领域层不得依赖某一个执行引擎。执行能力通过 `ExecutionEngine` 抽象隔离：
 
 ```text
-V1: TektonExecutionEngine
-Future: AgentExecutionEngine
+V1: JenkinsExecutionEngine
+Future: TektonExecutionEngine / AgentExecutionEngine
 ```
 
-第一阶段只实现 `TektonExecutionEngine`。`AgentExecutionEngine` 仅作为未来候选方向，不进入第一版实现计划。后续如果增加 FlowCI 风格 Agent 路线，应只替换适配器和模板，不重写 Project、Pipeline、Run 和 BuildResult。
+第一阶段只实现 `JenkinsExecutionEngine`。`TektonExecutionEngine` 和 `AgentExecutionEngine` 仅作为未来候选方向，不进入第一版实现计划。后续如果增加 Tekton 或 FlowCI 风格 Agent 路线，应只替换适配器和模板，不重写 Project、Pipeline、Run 和 BuildResult。
 
 ## 6. 第一版约束
 
@@ -107,7 +107,7 @@ Future: AgentExecutionEngine
 代价：
 
 - 需要设计并维护自己的 PipelineConfiguration 和 StepType 模型。
-- 即使执行层使用 Tekton，也要做一层产品模型到 Tekton 的转换。
+- 即使执行层使用 Jenkins，也要做一层产品模型到 Jenkins Pipeline Script 的转换。
 - FlowCI 只是参考来源，不能直接复用其所有代码和生态。
 
 ## 8. 被拒绝方案
@@ -116,6 +116,7 @@ Future: AgentExecutionEngine
 |---|---|
 | 直接 fork FlowCI | 会继承其 Agent 执行模型和历史实现，后续接入 GitOps/Argo CD 与自定义产品模型可能更重 |
 | 直接暴露 Tekton YAML | 用户体验差，业务用户需要理解 Kubernetes CRD，后续大改风险高 |
+| 业务仓库强制提交 Jenkinsfile | 与平台保存流水线配置、统一生成执行脚本的目标冲突 |
 | 第一版做自由拖拽流水线编辑器 | 实现成本高，容易拖慢 Java CI 纵向切片 |
 | 业务仓库内保存 CI 配置 | 与当前目标冲突；第一版要求平台数据库保存流水线配置 |
 

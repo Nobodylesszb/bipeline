@@ -12,13 +12,13 @@
 
 ```text
 Java 控制面
-→ Tekton 执行 CI
+→ Jenkins 执行 CI
 → Zot 保存 OCI 镜像
 → GitOps 仓库保存部署期望状态
 → Argo CD 执行 CD
 ```
 
-第一版不要求业务仓库内存在 CI 配置文件。业务仓库只保存源码，流水线配置由平台数据库保存，运行时由 Java 后端生成 Tekton `PipelineRun`。
+第一版不要求业务仓库内存在 CI 配置文件。业务仓库只保存源码，流水线配置由平台数据库保存，运行时由 Java 后端生成 Jenkins Pipeline Script 并触发 Jenkins Build。
 
 ## 2. 信息架构
 
@@ -132,7 +132,7 @@ flowchart LR
   C --> D["配置项目仓库"]
   D --> E["创建流水线"]
   E --> F["手动运行 CI"]
-  F --> G["Tekton 执行 PipelineRun"]
+  F --> G["Jenkins 执行 Build"]
   G --> H["推送镜像到 Zot"]
   H --> I["生成 BuildResult"]
   I --> J["生成 ReleaseCandidate"]
@@ -339,7 +339,7 @@ Base URL 可访问
 └────────────────────────────────────────────────────────────┘
 ```
 
-后端保存的是 `PipelineConfiguration`，不是 Tekton YAML。运行时由 `TektonAdapter` 根据配置生成 `PipelineRun`。
+后端保存的是 `PipelineConfiguration`，不是 Jenkinsfile。运行时由 `JenkinsExecutionEngine` 根据配置生成 Jenkins Pipeline Script。
 
 ### 6.8 选择流水线模板
 
@@ -423,8 +423,8 @@ Python · 测试、构建、镜像推送
 ```text
 V1：只读预览，由模板生成，不支持拖拽编辑。
 V2：允许启停内置步骤，例如 Sonar、Trivy、自动化测试。
-V3：允许新增自定义命令步骤，但仍由平台转换为 Tekton。
-V4：支持高级模式导入/导出平台 YAML，但不直接暴露 Tekton YAML。
+V3：允许新增自定义命令步骤，但仍由平台转换为 Jenkins Pipeline Script。
+V4：支持高级模式导入/导出平台 YAML，但不直接暴露 Jenkinsfile。
 ```
 
 ### 6.10 运行列表
@@ -440,7 +440,7 @@ V4：支持高级模式导入/导出平台 YAML，但不直接暴露 Tekton YAML
 └────────────────────────────────────────────────────────────────────┘
 ```
 
-运行记录来自数据库投影，但真实执行状态以 Tekton/Kubernetes API 为准。
+运行记录来自数据库投影，但真实执行状态以 Jenkins API 为准。
 
 ### 6.11 运行详情
 
@@ -650,7 +650,7 @@ V3：允许添加自定义命令 Step。
 右侧展示制品、报告和变量快照。
 ```
 
-失败时默认定位到第一个失败 Step。用户不需要先理解 Tekton `TaskRun` 才能定位问题。
+失败时默认定位到第一个失败 Step。用户不需要先理解 Jenkins Job/Build 细节才定位问题。
 
 ### 9.5 模板与插件
 
@@ -674,7 +674,7 @@ V3：允许添加自定义命令 Step。
 右侧：暂不做复杂抽屉，只在运行详情中保留日志入口
 ```
 
-前端应隐藏 Tekton、Kubernetes、Argo CD 的底层对象名称，除非用户进入调试信息。普通用户看到的是：
+前端应隐藏 Jenkins、Kubernetes、Argo CD 的底层对象名称，除非用户进入调试信息。普通用户看到的是：
 
 ```text
 流水线
@@ -694,8 +694,8 @@ V3：允许添加自定义命令 Step。
 - 第一版一个 Pipeline 默认检出 Project 的代码仓库。
 - 一个 Project 可以创建多条 Pipeline。
 - Pipeline 配置保存到平台数据库。
-- BuildProfile 和 Tekton 模板使用版本化定义。
-- 运行状态以 Tekton/Kubernetes API 为事实源。
+- BuildProfile 和 Jenkins Pipeline Script 模板使用版本化定义。
+- 运行状态以 Jenkins API 为事实源。
 - 镜像制品以 Zot digest 为事实源。
 - 部署期望状态以 GitOps 仓库为事实源。
 - 部署执行状态以 Argo CD/Kubernetes 为事实源。
@@ -723,8 +723,8 @@ Deployment
 
 ```text
 GitLab / GitHub / Gitea / Generic Git
-V1: TektonExecutionEngine
-Future: AgentExecutionEngine
+V1: JenkinsExecutionEngine
+Future: TektonExecutionEngine / AgentExecutionEngine
 Zot / Harbor / 其他 OCI Registry
 Argo CD / 其他 GitOps Controller
 SonarQube / 其他代码质量平台
@@ -744,6 +744,7 @@ deploy     负责部署状态投影
 第一版可以写得简单，但不能把以下内容硬编码进核心领域层：
 
 ```text
+Jenkins Job/Build DTO
 Tekton CRD 类型
 Kubernetes Secret 类型
 某一个 GitLab API DTO
@@ -752,7 +753,7 @@ Kubernetes Secret 类型
 某一个 Argo CD Application 结构
 ```
 
-第一版只实现 Tekton 执行路线。如果未来要从 Tekton 改成 FlowCI 风格 Agent，或从 Zot 改成 Harbor，应只替换适配器和模板，不重写 Project、Pipeline、Run、BuildResult 这些核心对象。
+第一版只实现 Jenkins 执行路线。如果未来要从 Jenkins 改成 Tekton 或 FlowCI 风格 Agent，或从 Zot 改成 Harbor，应只替换适配器和模板，不重写 Project、Pipeline、Run、BuildResult 这些核心对象。
 
 ## 13. 原型验收标准
 
@@ -760,5 +761,5 @@ Kubernetes Secret 类型
 - 用户可以从运行详情定位失败阶段和失败日志。
 - 用户可以看到源码提交、镜像 tag、镜像 digest 和 BuildResult 的关联。
 - 用户可以理解“CI 成功”和“已部署”是两个不同状态。
-- 前端页面不暴露 Tekton YAML 编辑器。
+- 前端页面不暴露 Jenkinsfile 编辑器。
 - 业务仓库不需要提交平台专用 CI 配置。

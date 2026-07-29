@@ -16,7 +16,7 @@ CodeSource
 → Project
 → Repository
 → Java Maven Pipeline
-→ Tekton PipelineRun
+→ Jenkins Build
 → Step 状态与日志
 → BuildResult
 → Zot 镜像 digest
@@ -37,9 +37,9 @@ Webhook 自动触发
 
 ## 2. 实施原则
 
-- V1 只实现 `TektonExecutionEngine`。
+- V1 只实现 `JenkinsExecutionEngine`。
 - 产品交互参考 FlowCI，但不 fork FlowCI。
-- 领域层不依赖 Tekton CRD、GitLab SDK DTO、Registry SDK DTO。
+- 领域层不依赖 Jenkins DTO、GitLab SDK DTO、Registry SDK DTO。
 - CodeSource 密钥本地 MVP 允许明文入库，但响应和日志必须脱敏。
 - StepType 必须先有 `PluginContract`，再被 Pipeline 模板引用。
 - 每个阶段必须有可验证结果，不用“大平台完成度”衡量进展。
@@ -54,8 +54,8 @@ MVP-02 数据库迁移与基础实体
 MVP-03 CodeSource 与 Repository
 MVP-04 BuildProfile 与 PluginContract
 MVP-05 Pipeline 创建与流程预览
-MVP-06 Run 模型与 TektonExecutionEngine 接口
-MVP-07 Tekton Java Maven 纵向切片
+MVP-06 Run 模型与 JenkinsExecutionEngine 接口
+MVP-07 Jenkins Java Maven 纵向切片
 MVP-08 日志、状态同步与 BuildResult
 MVP-09 Registry/Zot digest 投影
 MVP-10 API 验收与最小前端准备
@@ -68,7 +68,7 @@ MVP-10 API 验收与最小前端准备
 任务：
 
 ```text
-确认 V1 只实现 TektonExecutionEngine
+确认 V1 只实现 JenkinsExecutionEngine
 确认 FlowCI 仅作为交互与模型参考
 确认 CodeSource 先明文入库、响应脱敏
 确认第一版一个 Project 一个 Repository
@@ -296,9 +296,9 @@ Pipeline 创建后 status 为 ACTIVE
 可以创建 main-ci 并看到只读流程预览
 ```
 
-## 10. MVP-06：Run 模型与 TektonExecutionEngine 接口
+## 10. MVP-06：Run 模型与 JenkinsExecutionEngine 接口
 
-目的：把平台运行记录和 Tekton 执行隔离清楚。
+目的：把平台运行记录和 Jenkins 执行隔离清楚。
 
 任务：
 
@@ -307,7 +307,7 @@ Pipeline 创建后 status 为 ACTIVE
 创建 PipelineRun QUEUED
 保存 pipelineSnapshotJson
 定义 ExecutionEngine 接口
-实现 TektonExecutionEngine 空适配
+实现 JenkinsExecutionEngine 空适配
 实现 StepRun 初始化
 实现 cancel/retry 基础语义
 ```
@@ -333,18 +333,18 @@ void cancel(ExternalRunId id)
 完成条件：
 
 ```text
-不接 Tekton 时，也能完整创建运行记录和 StepRun
+不接 Jenkins 时，也能完整创建运行记录和 StepRun
 ```
 
-## 11. MVP-07：Tekton Java Maven 纵向切片
+## 11. MVP-07：Jenkins Java Maven 纵向切片
 
-目的：真实创建 Tekton PipelineRun。
+目的：真实创建 Jenkins Job 并触发一次 Java Maven 构建。
 
 任务：
 
 ```text
-定义 Java Maven Tekton Pipeline/Task 模板
-实现 PipelineConfiguration → Tekton PipelineRun 转换
+定义 Java Maven Jenkins Pipeline Script 模板
+实现 PipelineConfiguration → Jenkins Pipeline Script 转换
 处理 Git 凭据传递
 处理 Workspace
 处理 Maven 测试与打包
@@ -367,13 +367,13 @@ void cancel(ExternalRunId id)
 公开 Java Maven 仓库跑通
 私有 Git 仓库认证失败可识别
 Maven 测试失败后 image-build/image-push 跳过
-Tekton PipelineRun 名称写入 externalRunId
+Jenkins Job 名称和 Build Number 写入 externalRunId
 ```
 
 完成条件：
 
 ```text
-手动运行 main-ci 能在 K3s 里创建 Tekton PipelineRun
+手动运行 main-ci 能在 Jenkins 中创建 Build
 ```
 
 ## 12. MVP-08：日志、状态同步与 BuildResult
@@ -495,7 +495,7 @@ Run 创建与重跑
 系统测试：
 
 ```text
-Tekton smoke
+Jenkins smoke
 Java Maven 成功流水线
 Java Maven 测试失败流水线
 Zot push digest 验证
@@ -508,7 +508,7 @@ MVP 完成必须同时满足：
 
 ```text
 API 可以完成端到端 Java Maven CI
-Tekton PipelineRun 真实执行
+Jenkins Build 真实执行
 Zot 中存在带 digest 的镜像
 BuildResult 包含 source/artifacts/reports/provenance
 失败时能定位 Step 和日志

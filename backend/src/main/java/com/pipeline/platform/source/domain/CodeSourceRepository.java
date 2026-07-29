@@ -2,7 +2,6 @@ package com.pipeline.platform.source.domain;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 public interface CodeSourceRepository {
 
@@ -10,7 +9,7 @@ public interface CodeSourceRepository {
 
     CodeSource save(CodeSource codeSource);
 
-    Optional<CodeSource> findById(UUID id);
+    Optional<CodeSource> findById(Long id);
 
     List<CodeSource> findAll();
 }

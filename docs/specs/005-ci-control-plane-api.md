@@ -23,7 +23,7 @@
 → 查询运行详情、日志入口和 BuildResult
 ```
 
-第一版只实现 Tekton 执行路线。API 不暴露 Tekton CRD、Kubernetes Secret、GitLab SDK DTO 或 Registry SDK DTO。
+第一版只实现 Jenkins 执行路线。API 不暴露 Jenkins DTO、Jenkinsfile 脚本、GitLab SDK DTO 或 Registry SDK DTO。
 
 ## 2. 通用约定
 
@@ -35,11 +35,11 @@
 
 ### 2.2 ID
 
-所有资源 ID 使用 UUID 字符串。
+所有资源 ID 使用数据库自增数字 ID。
 
 ```json
 {
-  "id": "018fb3f0-8e73-7b5d-9f9a-f4f2c0b5f8d1"
+  "id": 1
 }
 ```
 
@@ -557,12 +557,12 @@ POST /api/v1/pipelines/{pipelineId}/runs
 
 ```json
 {
-  "id": "run-uuid",
-  "pipelineId": "pipeline-uuid",
-  "projectId": "project-uuid",
+  "id": 1,
+  "pipelineId": 1,
+  "projectId": 1,
   "runNumber": 1,
   "status": "QUEUED",
-  "executionEngine": "TEKTON",
+  "executionEngine": "JENKINS",
   "externalRunId": null,
   "createdAt": "2026-07-29T14:40:00+08:00"
 }
@@ -574,7 +574,7 @@ POST /api/v1/pipelines/{pipelineId}/runs
 Pipeline 必须是 ACTIVE。
 revision 必须能解析成完整 commit SHA。
 创建运行时必须保存 pipelineSnapshotJson。
-调用 TektonExecutionEngine 后回填 externalRunId。
+调用 JenkinsExecutionEngine 后回填 externalRunId。
 ```
 
 ### 7.2 查询运行列表
@@ -600,7 +600,7 @@ GET /api/v1/runs/{runId}
   "triggeredBy": "bo",
   "requestedRevision": "main",
   "resolvedRevision": "abc123",
-  "executionEngine": "TEKTON",
+  "executionEngine": "JENKINS",
   "externalRunId": "main-ci-run-abc123",
   "steps": [
     {
