@@ -111,7 +111,7 @@ class CreatePipelineServiceTest {
                                 StepType.SHELL,
                                 "test",
                                 "运行测试",
-                                "{\"command\":\"mvn test\"}"
+                                "{\"command\":\"mvn clean package -DskipTests\"}"
                         ))
                 ))
         );

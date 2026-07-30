@@ -69,7 +69,7 @@ public record CreatePipelineRequest(
             @Schema(description = "步骤展示名称", example = "运行测试")
             String displayName,
 
-            @Schema(description = "步骤配置 JSON", example = "{\"command\":\"mvn test\"}")
+            @Schema(description = "步骤配置 JSON", example = "{\"command\":\"mvn clean package -DskipTests\"}")
             Map<String, Object> config
     ) {
     }
